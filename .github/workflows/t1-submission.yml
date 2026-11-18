@@ -37,6 +37,20 @@ jobs:
           docker buildx build --platform linux/amd64 --load -t "$LOCAL_IMAGE" source
           python3 source/verify_t1.py "$LOCAL_IMAGE"
 
+      - name: Export the verified image for local publication
+        if: ${{ !inputs.publish }}
+        run: docker save "$LOCAL_IMAGE" | gzip -1 > eol-t1.tar.gz
+
+      - name: Attach the verified image
+        if: ${{ !inputs.publish }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: eol-t1-image
+          path: eol-t1.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
       - name: Report dry run
         if: ${{ !inputs.publish }}
         run: |
@@ -52,7 +66,7 @@ jobs:
           HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
           HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
         run: |
-          if [[ ! "$IMAGE_REPO" =~ ^registry\.cookcloud\.ru/go1-hackathon-remote-stage-[a-z0-9]+([._-][a-z0-9]+)*/[a-z0-9]+([._-][a-z0-9]+)*$ ]]; then
+          if [[ ! "$IMAGE_REPO" =~ ^registry\.cookcloud\.ru/[a-z0-9]+([._-][a-z0-9]+)*/[a-z0-9]+([._-][a-z0-9]+)*$ ]]; then
             echo 'Set HARBOR_IMAGE_REPO to the repository path assigned by the organizers, without a tag.' >&2
             exit 1
           fi
