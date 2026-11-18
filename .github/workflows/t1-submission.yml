@@ -1,0 +1,87 @@
+name: T1 / Build and publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Push the verified image to Harbor
+        type: boolean
+        default: false
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_URL: https://github.com/tim1363/hackaton-EOL-submission
+  SOURCE_SHA: 150f82738ebe9d8ed2a9e63530fcedbc62b5da59
+  LOCAL_IMAGE: eol-t1:local
+
+jobs:
+  t1:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Fetch the exact public submission source
+        run: |
+          git init source
+          git -C source fetch --depth=1 --no-tags "${SOURCE_URL}.git" "$SOURCE_SHA"
+          git -C source checkout --detach FETCH_HEAD
+          test "$(git -C source rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Build and verify T1 offline
+        run: |
+          docker buildx build --platform linux/amd64 --load -t "$LOCAL_IMAGE" source
+          python3 source/verify_t1.py "$LOCAL_IMAGE"
+
+      - name: Report dry run
+        if: ${{ !inputs.publish }}
+        run: |
+          {
+            printf '%s\n\n' '### T1 smoke check passed. Nothing was published.'
+            printf 'Source: %s/commit/%s\n' "$SOURCE_URL" "$SOURCE_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Push to Harbor and verify the published digest
+        if: inputs.publish
+        env:
+          IMAGE_REPO: ${{ vars.HARBOR_IMAGE_REPO }}
+          HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+        run: |
+          if [[ ! "$IMAGE_REPO" =~ ^registry\.cookcloud\.ru/go1-hackathon-remote-stage-[a-z0-9]+([._-][a-z0-9]+)*/[a-z0-9]+([._-][a-z0-9]+)*$ ]]; then
+            echo 'Set HARBOR_IMAGE_REPO to the repository path assigned by the organizers, without a tag.' >&2
+            exit 1
+          fi
+          if [[ -z "$HARBOR_USERNAME" || -z "$HARBOR_PASSWORD" ]]; then
+            echo 'Set the HARBOR_USERNAME and HARBOR_PASSWORD Actions secrets.' >&2
+            exit 1
+          fi
+
+          export DOCKER_CONFIG
+          DOCKER_CONFIG="$(mktemp -d)"
+          trap 'rm -rf -- "$DOCKER_CONFIG"' EXIT
+          printf '%s' "$HARBOR_PASSWORD" | docker login registry.cookcloud.ru --username "$HARBOR_USERNAME" --password-stdin
+          unset HARBOR_USERNAME HARBOR_PASSWORD
+
+          image_tag="${IMAGE_REPO}:t1-${SOURCE_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker tag "$LOCAL_IMAGE" "$image_tag"
+          docker push "$image_tag"
+          digest="$(docker buildx imagetools inspect "$image_tag" --format '{{.Manifest.Digest}}')"
+          if [[ ! "$digest" =~ ^sha256:[[:xdigit:]]{64}$ ]]; then
+            echo 'Harbor did not return a valid manifest digest.' >&2
+            exit 1
+          fi
+          published_image="${IMAGE_REPO}@${digest}"
+          docker image rm "$image_tag" "$LOCAL_IMAGE"
+          docker pull --platform linux/amd64 "$published_image"
+          python3 source/verify_t1.py "$published_image"
+
+          {
+            printf '%s\n\n' '### Two fields to paste into the RoboHack cabinet'
+            printf 'GitHub commit: %s/commit/%s\n\n' "$SOURCE_URL" "$SOURCE_SHA"
+            printf 'Docker pull: `docker pull --platform linux/amd64 %s`\n' "$published_image"
+          } >> "$GITHUB_STEP_SUMMARY"
