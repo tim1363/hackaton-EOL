@@ -78,7 +78,6 @@ Contacts, solver, model, simulation timestep and ROS remain different.
 `ppo-v5-servo` starts from v3 using this mode and the same PPO settings as v4:
 `/kaggle/working/rh-runs/ppo-v5-servo/`,
 [W&B](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/bnmzj76z).
-It must be evaluated through real T2 in the public simulator before selection.
 The host restart interrupted this run after checkpoint `000006553600`. A fresh
 run, `ppo-v5-servo-resume3`, restores that checkpoint; optimizer continuity is
 not assumed. Logs/config/checkpoints remain under `/kaggle/working/rh-runs/`,
@@ -96,8 +95,20 @@ observed `/lowcmd` subscriber gap 38 ms. The actor was copied into each
 container; the normal image still contains v3. All starts were nominal and
 simulator and participant shared a network-isolated container; this is not
 Judge. Logs and per-container actor hashes:
-`/opt/data/rh/public-test/t3-v5-9830400/`. Candidate comparison under perturbed
-initial conditions is separate from this result.
+`/opt/data/rh/public-test/t3-v5-9830400/`.
+
+In an additional paired stress experiment, each policy used the same ten seeds:
+initial roll/pitch ±0.04 rad, yaw ±0.15 rad, height ±0.005 m, joints ±0.04 rad,
+and all geom friction coefficients scaled by 0.85–1.15. v3 and v5 each passed
+10/10 (21.484–24.964 s vs 13.042–14.132 s); the maximum observed `/lowcmd`
+gap was 46 ms for v3 and 42 ms for v5. These perturbed simulator conditions are
+not the Judge contract and the sample is too small to establish a reliability
+ranking. Exact parameters, per-container hashes, evaluator and simulator
+wrapper are under `/opt/data/rh/public-test/t3-paired-stress/`; the tracked
+wrappers are `stress_public_sim.py` and `run_public_sim_stress.sh`.
+
+These public-simulator trials used the T2 implementation before the later
+float32 wire-endpoint adjustment; they do not validate that change.
 
 The ten-trial source snapshot is preserved under
 `/opt/data/rh/public-test/trial-source/`.
