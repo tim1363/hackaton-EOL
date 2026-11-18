@@ -79,10 +79,25 @@ Contacts, solver, model, simulation timestep and ROS remain different.
 `/kaggle/working/rh-runs/ppo-v5-servo/`,
 [W&B](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/bnmzj76z).
 It must be evaluated through real T2 in the public simulator before selection.
+The host restart interrupted this run after checkpoint `000006553600`. A fresh
+run, `ppo-v5-servo-resume3`, restores that checkpoint; optimizer continuity is
+not assumed. Logs/config/checkpoints remain under `/kaggle/working/rh-runs/`,
+with [new W&B run](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/lyoq0456).
 
 The ten-trial source snapshot is preserved under
 `/opt/data/rh/public-test/trial-source/`.
 
+## Combined participant image trial
+
+After optimizing T2's collision pipeline without changing its sampling grid,
+ten fresh containers running the combined T2+T3 entrypoint with v3 reached 3 m
+in 10/10 trials at 0.4 m/s (21.34–24.23 s after warmup). The largest observed
+`/lowcmd` subscriber gap was 58 ms. Every trial used the same nominal start;
+this is not the official Judge. The public simulator and participant ran inside
+one isolated container without host networking or additional privileges. Logs:
+`/opt/data/rh/public-test/t3-image/`; exact participant source snapshot:
+`/opt/data/rh/public-test/t3-image-source/`. The later ROS shutdown cleanup did
+not change inference or filtering; it was tested separately.
 ## Public simulator trial (18 November 2026)
 
 Using released `registry.cookcloud.ru/go1-hackathon-remote-stage/go1-sim:v1.0`
