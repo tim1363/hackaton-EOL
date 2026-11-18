@@ -1,0 +1,67 @@
+"""Go1 PPO environment with deployable actor inputs and a target safety filter.
+
+Requires the pinned mujoco_playground checkout documented in README.md.
+This is deliberately not a substitute for the production collision checker.
+"""
+
+import jax
+import jax.numpy as jnp
+
+from mujoco_playground._src.locomotion.go1 import joystick
+
+# T2 limits, ordered FR, FL, RR, RL (hip, thigh, calf).
+JOINT_LOWER = jnp.tile(jnp.array([-0.863, -0.686, -2.818]), 4)
+JOINT_UPPER = jnp.tile(jnp.array([0.863, 4.501, -0.888]), 4)
+MAX_TARGET_STEP = 5.0 * jnp.pi / 180.0
+
+
+def filter_targets(previous, requested):
+    """Clamp target and per-tick change; reject the whole non-finite vector."""
+    finite = jnp.all(jnp.isfinite(requested))
+    # Avoid NaNs entering intermediate computations on accelerators.
+    requested = jnp.where(finite, requested, previous)
+    target = jnp.clip(requested, JOINT_LOWER, JOINT_UPPER)
+    target = previous + jnp.clip(target - previous, -MAX_TARGET_STEP, MAX_TARGET_STEP)
+    return jnp.where(finite, target, previous)
+
+
+class SafeJoystick(joystick.Joystick):
+    """Train against the position/step portion of T2, at 50 Hz.
+
+    Collision and path checking, ROS transport, and the missing-input watchdog
+    are not modeled here; the production T2 block remains authoritative.
+    """
+
+    def _get_obs(self, data, info):
+        obs = super()._get_obs(data, info)
+        # Upstream actor state starts with simulator-only body linear velocity.
+        # Gyro, projected gravity, joint position/velocity, last action, command
+        # are all available or reconstructible from LowState/cmd_vel.
+        obs["state"] = obs["state"][3:]
+        return obs
+
+    def sample_command(self, rng, _previous):
+        # Judge tests forward-only commands in [0.1, 0.6] m/s.
+        speed = jax.random.uniform(rng, (), minval=0.1, maxval=0.6)
+        return jnp.array([speed, 0.0, 0.0])
+
+    def reset(self, rng):
+        state = super().reset(rng)
+        state.info["safe_target"] = self._default_pose
+        state.info["rng"], key = jax.random.split(state.info["rng"])
+        state.info["command"] = self.sample_command(key, state.info["command"])
+        return state.replace(obs=self._get_obs(state.data, state.info))
+
+    def step(self, state, action):
+        target = filter_targets(
+            state.info["safe_target"],
+            self._default_pose + action * self._config.action_scale,
+        )
+        state.info["safe_target"] = target
+        filtered_action = (target - self._default_pose) / self._config.action_scale
+        state = super().step(state, filtered_action)
+        # Upstream builds observations before updating last_act. Expose the
+        # target just applied, so the actor can reconstruct the filter state.
+        obs = dict(state.obs)
+        obs["state"] = obs["state"].at[30:42].set(filtered_action)
+        return state.replace(obs=obs)
