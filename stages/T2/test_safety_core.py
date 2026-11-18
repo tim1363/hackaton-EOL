@@ -6,7 +6,7 @@ import unittest
 import mujoco
 import numpy as np
 
-from safety_core import CollisionChecker, HOME, LOWER, MAX_STEP, TargetFilter, UPPER
+from safety_core import CollisionChecker, HOME, LOWER, TargetFilter, UPPER
 
 
 class SafetyTests(unittest.TestCase):
@@ -25,8 +25,29 @@ class SafetyTests(unittest.TestCase):
         self.assertFalse(accepted)
         np.testing.assert_array_equal(q, old)
         q, _ = f.apply(np.full(12, 1000.0))
-        self.assertLessEqual(np.max(np.abs(q - old)), MAX_STEP + 1e-12)
+        # Quantization can consume a tiny portion of MAX_STEP's internal
+        # margin; the serialized change must still be strictly below 5 degrees.
+        self.assertLessEqual(np.max(np.abs(q - old)), np.deg2rad(5.0))
         self.assertTrue(np.all((q >= LOWER) & (q <= UPPER)))
+
+    def test_collision_grid_uses_float32_wire_endpoints(self):
+        class RecordingChecker:
+            def safe(self, target):
+                return True
+
+            def safe_transition(self, start, end):
+                self.start, self.end = start.copy(), end.copy()
+                return True
+
+        checker = RecordingChecker()
+        initial = HOME + 0.000000123
+        f = TargetFilter(checker, initial)
+        target, accepted = f.apply(HOME + 0.123456789)
+        self.assertTrue(accepted)
+        np.testing.assert_array_equal(checker.start, initial.astype(np.float32).astype(float))
+        np.testing.assert_array_equal(checker.end, target.astype(np.float32).astype(float))
+        np.testing.assert_array_equal(f.target, target)
+
 
     def test_collision_found_and_rejected(self):
         rng = np.random.default_rng(47)
@@ -82,6 +103,48 @@ class SafetyTests(unittest.TestCase):
                         if tuple(sorted((int(c.geom1), int(c.geom2)))) in self.checker.pairs
                         and c.dist < -0.0009]
             self.assertEqual(self.checker.safe(q), not bool(contacts))
+
+    @unittest.skipUnless(os.getenv("GO1_FULL_SCENE"), "Set GO1_FULL_SCENE for transition oracle")
+    def test_float32_transitions_against_full_model(self):
+        # Independent judge-grid oracle: full visual/collision model and
+        # mj_forward, not CollisionChecker.safe_transition's implementation.
+        model = mujoco.MjModel.from_xml_path(os.environ["GO1_FULL_SCENE"])
+        data = mujoco.MjData(model)
+        data.qpos[:7] = [0, 0, 1, 1, 0, 0, 0]
+        rng = np.random.default_rng(20261118)
+        accepted_count = 0
+        for track in range(8):
+            if track == 0:
+                initial = HOME
+            else:
+                for _ in range(1000):
+                    initial = rng.uniform(LOWER, UPPER)
+                    if self.checker.safe(initial):
+                        break
+                else:
+                    self.fail("Could not find a safe initial configuration")
+            f = TargetFilter(self.checker, initial)
+            previous = initial.astype(np.float32).astype(float)
+            for _ in range(40):
+                requested = rng.uniform(LOWER - 1.0, UPPER + 1.0)
+                target, accepted = f.apply(requested)
+                accepted_count += int(accepted)
+                target = target.astype(np.float32).astype(float)
+                self.assertTrue(np.all((target >= LOWER) & (target <= UPPER)))
+                distance = float(np.max(np.abs(target - previous)))
+                self.assertLessEqual(distance, np.deg2rad(5.0))
+                n = max(1, int(np.ceil(distance / np.deg2rad(0.1))))
+                for i in range(n + 1):
+                    data.qpos[7:] = previous + (target - previous) * (i / n)
+                    mujoco.mj_forward(model, data)
+                    for j in range(data.ncon):
+                        c = data.contact[j]
+                        pair = tuple(sorted((int(c.geom1), int(c.geom2))))
+                        self.assertFalse(pair in self.checker.pairs and c.dist < -0.001,
+                                         f"track={track}, sample={i}/{n}, pair={pair}, dist={c.dist}")
+                previous = target
+        self.assertGreater(accepted_count, 0)
+
 
     def test_home_transition_timing(self):
         # Informational, not a realtime guarantee: hardware and ROS scheduling differ.

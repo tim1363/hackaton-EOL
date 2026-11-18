@@ -84,7 +84,12 @@ class TargetFilter:
         self.checker = checker
         self.target = np.asarray(initial, dtype=np.float64).copy()
         if (self.target.shape != (12,) or not np.all(np.isfinite(self.target))
-                or np.any(self.target < LOWER) or np.any(self.target > UPPER)
+                or np.any(self.target < LOWER) or np.any(self.target > UPPER)):
+            raise ValueError("Initial target must be finite, in range, and collision-free")
+        # MotorCmd.q is float32 on the wire. Track exactly the published target,
+        # so the collision grid is computed from the same endpoints as Judge.
+        self.target = self.target.astype(np.float32).astype(np.float64)
+        if (np.any(self.target < LOWER) or np.any(self.target > UPPER)
                 or not checker.safe(self.target)):
             raise ValueError("Initial target must be finite, in range, and collision-free")
 
@@ -94,6 +99,7 @@ class TargetFilter:
             return self.target.copy(), False
         bounded = np.clip(requested, LOWER + 0.000001, UPPER - 0.000001)
         candidate = self.target + np.clip(bounded - self.target, -MAX_STEP, MAX_STEP)
+        candidate = candidate.astype(np.float32).astype(np.float64)
         if self.checker.safe_transition(self.target, candidate):
             self.target = candidate
             return self.target.copy(), True
