@@ -49,6 +49,8 @@ class CollisionChecker:
             )
         if self.model.ngeom != 56 or len(self.pairs) != 655:
             raise ValueError("Unexpected Go1 collision model or pair list")
+        if self.model.ntendon or self.model.nflex:
+            raise ValueError("Fast collision pipeline requires a model without tendons or flexes")
 
     def safe(self, q):
         self.data.qpos[7:] = q
