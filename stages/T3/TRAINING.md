@@ -83,6 +83,21 @@ The host restart interrupted this run after checkpoint `000006553600`. A fresh
 run, `ppo-v5-servo-resume3`, restores that checkpoint; optimizer continuity is
 not assumed. Logs/config/checkpoints remain under `/kaggle/working/rh-runs/`,
 with [new W&B run](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/lyoq0456).
+It completed 14,745,600 new transitions. The highest logged eval reward was
+33.572 at `000009830400`; reward is not Judge performance. The full run was
+backed up to `/opt/data/rh/ppo-v5-servo-resume3/`.
+
+Exported v5 checkpoint `000009830400` has SHA-256
+`60a4115d365aa3c3a94cd7fe34f78bc6cc0ddd13e6f294bbdd0b4f12481ca1ed`
+and Brax/NumPy action parity `4.62e-7` on 128 samples. Ten fresh isolated
+containers running the combined entrypoint with the optimized T2 and this
+actor reached 3 m in 10/10 episodes, 12.784–14.248 s after warmup, maximum
+observed `/lowcmd` subscriber gap 38 ms. The actor was copied into each
+container; the normal image still contains v3. All starts were nominal and
+simulator and participant shared a network-isolated container; this is not
+Judge. Logs and per-container actor hashes:
+`/opt/data/rh/public-test/t3-v5-9830400/`. Candidate comparison under perturbed
+initial conditions is separate from this result.
 
 The ten-trial source snapshot is preserved under
 `/opt/data/rh/public-test/trial-source/`.
