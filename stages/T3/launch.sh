@@ -25,5 +25,5 @@ exec .venv/bin/python -u "$RUN_DIR/source/train.py" \
   --env_name=Go1JoystickFlatTerrain --impl=jax \
   --num_timesteps="${NUM_TIMESTEPS:-80000000}" --num_envs="${NUM_ENVS:-4096}" \
   --num_evals="${NUM_EVALS:-17}" --num_eval_envs=32 \
-  --use_wandb --use_tb --log_training_metrics --training_metrics_steps=1000000 \
+  --use_wandb --use_tb \
   --logdir="$RUN_DIR/logs" --suffix=safe-ppo --seed="${SEED:-1}"
