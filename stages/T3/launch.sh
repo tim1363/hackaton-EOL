@@ -7,7 +7,7 @@ SECRET=${WANDB_KEY_FILE:-/kaggle/working/.secrets/wandb_api_key}
 HERE=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$RUN_DIR/source" "$RUN_DIR/logs"
 RUN_DIR=$(cd "$RUN_DIR" && pwd)
-cp "$HERE"/{train.py,safe_joystick.py,joint_dynamics.py,collision_callback.py,test_collision_callback.py,smoke_test.py,launch.sh} "$RUN_DIR/source/"
+cp "$HERE"/{train.py,safe_joystick.py,joint_dynamics.py,collision_callback.py,test_collision_callback.py,test_servo_model.py,smoke_test.py,launch.sh} "$RUN_DIR/source/"
 if [[ ${EXACT_T2_COLLISION:-0} == 1 ]]; then
   : "${SAFETY_CORE_DIR:?Set SAFETY_CORE_DIR to the directory containing safety_core.py and model/}"
   mkdir -p "$RUN_DIR/source/t2"

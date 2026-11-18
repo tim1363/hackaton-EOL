@@ -42,19 +42,24 @@ def main():
     parser.add_argument("--speed", type=float, default=0.4)
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--public-joint-dynamics", action="store_true",
-                        help="Approximate public joint damping, armature and friction in MJX")
+    dynamics = parser.add_mutually_exclusive_group()
+    dynamics.add_argument("--public-joint-dynamics", action="store_true",
+                          help="v4 approximation: velocity feedback as passive damping")
+    dynamics.add_argument("--public-servo-dynamics", action="store_true",
+                          help="public joint parameters and combined PD force clipping")
     parser.add_argument("--output", required=True, help="JSON results path")
     args = parser.parse_args()
     if not 0.1 <= args.speed <= 0.6 or args.episodes < 1:
         parser.error("speed must be in [0.1, 0.6] and episodes must be positive")
-    if os.environ.get("PUBLIC_JOINT_DYNAMICS") == "1" and not args.public_joint_dynamics:
-        parser.error("pass --public-joint-dynamics explicitly when PUBLIC_JOINT_DYNAMICS=1")
+    selected_mode = "servo" if args.public_servo_dynamics else "1" if args.public_joint_dynamics else "0"
+    environment_mode = os.environ.get("PUBLIC_JOINT_DYNAMICS", "0")
+    if environment_mode not in ("0", selected_mode):
+        parser.error("PUBLIC_JOINT_DYNAMICS conflicts with the selected evaluation flag")
 
     env = FixedSpeedJoystick(config=joystick.default_config(), config_overrides={"impl": "jax"})
     env.speed = args.speed
-    if args.public_joint_dynamics:
-        apply_public_joint_dynamics(env)
+    if selected_mode != "0" and environment_mode == "0":
+        apply_public_joint_dynamics(env, servo=(selected_mode == "servo"))
     dt = float(env.dt)
     if abs(dt - 0.02) > 1e-9:
         raise ValueError(f"Unexpected control timestep: {dt}")
@@ -123,6 +128,7 @@ def main():
         "scope": "Playground MJX only; no ROS, no T2 collision check, not judge results",
         "checkpoint": args.checkpoint, "seed": args.seed, "speed_mps": args.speed,
         "public_joint_dynamics_approximation": args.public_joint_dynamics,
+        "public_joint_dynamics_mode": selected_mode,
         "episode_count": args.episodes, "warmup_seconds": 1.5,
         "max_scored_seconds": 90.0, "control_dt": dt,
         "reference": "heading and position at end of warmup; falls checked after warmup",

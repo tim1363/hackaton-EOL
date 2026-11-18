@@ -24,6 +24,7 @@ if train_jax_ppo.wandb is not None:
         run = original_init(*args, **kwargs)
         run.config.update({
             "public_joint_dynamics_approximation": os.environ.get("PUBLIC_JOINT_DYNAMICS") == "1",
+            "public_joint_dynamics_mode": os.environ.get("PUBLIC_JOINT_DYNAMICS", "0"),
             "exact_t2_collision_callback": os.environ.get("EXACT_T2_COLLISION") == "1",
         })
         return run

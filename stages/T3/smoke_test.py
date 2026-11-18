@@ -25,11 +25,15 @@ def main():
     assert np.all(np.asarray(repeated) >= np.asarray(JOINT_LOWER) - 1e-6)
 
     env = SafeJoystick(config=joystick.default_config(), config_overrides={"impl": "jax"})
-    if os.environ.get("PUBLIC_JOINT_DYNAMICS") == "1":
-        np.testing.assert_allclose(env.mj_model.dof_damping[6:], np.tile([1.5, 2.5, 2.5], 4))
-        np.testing.assert_allclose(env.mjx_model.dof_damping[6:], np.tile([1.5, 2.5, 2.5], 4))
+    mode = os.environ.get("PUBLIC_JOINT_DYNAMICS", "0")
+    if mode in ("1", "servo"):
+        damping = [1.0, 2.0, 2.0] if mode == "servo" else [1.5, 2.5, 2.5]
+        np.testing.assert_allclose(env.mj_model.dof_damping[6:], np.tile(damping, 4))
+        np.testing.assert_allclose(env.mjx_model.dof_damping[6:], np.tile(damping, 4))
         np.testing.assert_allclose(env.mjx_model.dof_armature[6:], 0.01)
         np.testing.assert_allclose(env.mjx_model.dof_frictionloss[6:], 0.2)
+        if mode == "servo":
+            np.testing.assert_allclose(env.mjx_model.actuator_biasprm[:, 2], -0.5)
     state = jax.jit(env.reset)(jax.random.PRNGKey(0))
     assert state.obs["state"].shape == (45,), state.obs["state"].shape
     assert state.obs["privileged_state"].shape[0] > 45

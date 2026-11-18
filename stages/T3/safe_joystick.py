@@ -45,10 +45,13 @@ class SafeJoystick(joystick.Joystick):
     """
 
     def __init__(self, *args, **kwargs):
+        mode = os.environ.get("PUBLIC_JOINT_DYNAMICS", "0")
+        if mode not in ("0", "1", "servo"):
+            raise ValueError(f"Unsupported PUBLIC_JOINT_DYNAMICS={mode!r}")
         super().__init__(*args, **kwargs)
-        if os.environ.get("PUBLIC_JOINT_DYNAMICS") == "1":
+        if mode != "0":
             from joint_dynamics import apply_public_joint_dynamics
-            apply_public_joint_dynamics(self)
+            apply_public_joint_dynamics(self, servo=(mode == "servo"))
 
 
     def _get_obs(self, data, info):

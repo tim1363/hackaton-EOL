@@ -49,15 +49,36 @@ Results and exact evaluation source are in
 `/kaggle/working/rh-runs/ppo-v3-dynamics-eval/` and
 `/opt/data/rh/ppo-v3-dynamics-eval/`.
 
-`ppo-v4-dynamics` fine-tunes from the latest v3 checkpoint with this approximate
-joint model, 4096 envs, 20M requested transitions, and learning rate 1e-4. Its
-run directory is `/kaggle/working/rh-runs/ppo-v4-dynamics/` and its
-[W&B run](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/3et8qgaw).
-It still uses only the GPU joint/step filter, not the CPU collision callback or
-ROS timing. Do not replace v3 until evaluating checkpoints through real T2 in
-the public simulator. `PUBLIC_JOINT_DYNAMICS=1` enables the approximation for
-training; the PPO configuration, source and flag values are preserved in the
-run directory.
+`ppo-v4-dynamics` fine-tuned from v3 with that approximate joint model, 4096
+envs and learning rate 1e-4. The training loop completed 26,214,400 steps
+(20M requested); `000013107200` had the highest logged evaluation reward,
+33.448. Its [W&B run](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/3et8qgaw)
+and complete run directory `/kaggle/working/rh-runs/ppo-v4-dynamics/` preserve
+configs, sources and checkpoints. It used only the GPU joint/step filter, not
+collision checking or ROS timing.
+
+In ten fresh public-simulator containers with unchanged v3 trial source and real
+T2, checkpoint `000013107200` achieved 8/10, with two falls at 1.10 m and
+2.54 m. Successful runs took 15.06–17.11 s after warmup. The v3 baseline was
+9/10 and slower (22.22–24.32 s); these small, same-nominal-start samples do not
+establish a reliability ranking. Keep v3 as the deployment baseline pending
+more testing. Candidate actor SHA-256:
+`85a1480a7a86b130aa44899cb5bdbb73b5fdde01de0c29dc33503584afc073bf`;
+export parity error `4.17e-7`. Logs and exact source:
+`/opt/data/rh/public-test-v4-13m/`.
+
+`PUBLIC_JOINT_DYNAMICS=servo` is a closer joint-only alternative: passive
+damping 1/2/2 and a position actuator with velocity bias -0.5, clipped after
+combining PD torque. It matches the public controller only for the deployed
+fixed kp=35, kd=0.5, zero desired velocity and zero feedforward. In
+`test_servo_model.py`, native MuJoCo actuator forces matched the public PD
+equation on 128 random states, including 724 saturated and 812 unsaturated
+motor cases; one state was also compared to MJX. GPU environment smoke passed.
+Contacts, solver, model, simulation timestep and ROS remain different.
+`ppo-v5-servo` starts from v3 using this mode and the same PPO settings as v4:
+`/kaggle/working/rh-runs/ppo-v5-servo/`,
+[W&B](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/bnmzj76z).
+It must be evaluated through real T2 in the public simulator before selection.
 
 The ten-trial source snapshot is preserved under
 `/opt/data/rh/public-test/trial-source/`.
@@ -121,6 +142,8 @@ creation for optional diagnostic counters and a ROS observation trace.
 - Run `python smoke_test.py` inside that environment; it requires a GPU.
 - Copy this directory to the host, then run
   `RUN_DIR=/kaggle/working/rh-runs/<new-name> bash launch.sh > <log> 2>&1`.
+  `PUBLIC_JOINT_DYNAMICS=servo` selects the clipped combined-PD actuator model;
+  `1` retains the historical passive-damping approximation.
   For the experimental joint approximation set `PUBLIC_JOINT_DYNAMICS=1`;
   `LEARNING_RATE` optionally overrides the PPO learning rate.
   `launch.sh` copies the exact source into the run, records revisions/package
