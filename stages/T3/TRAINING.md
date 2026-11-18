@@ -23,6 +23,9 @@ actual T2 decisions, including collision checks, in the public simulator.
 - Allow Playground to populate its pinned Menagerie assets via
   `mujoco_playground._src.mjx_env.ensure_menagerie_exists()`.
 - Install the Playground JAX/MJX/Brax training dependencies in `.venv`.
+  The working T4 setup uses JAX and jaxlib `0.7.2`, MuJoCo `3.16.0`,
+  Brax `0.14.2`. JAX `0.12.0.1` fails because Brax still calls the removed
+  `jax.device_put_replicated` API.
 - `LD_LIBRARY_PATH=/usr/local/nvidia/lib64`, unset `PYTHONPATH`, and set
   `PYTHONNOUSERSITE=1` to select the working GPU libraries on this host.
 - Run `python smoke_test.py` inside that environment; it requires a GPU.

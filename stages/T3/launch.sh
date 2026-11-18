@@ -11,7 +11,7 @@ cp "$HERE"/{train.py,safe_joystick.py,smoke_test.py,launch.sh} "$RUN_DIR/source/
 cd "$PLAYGROUND"
 git rev-parse HEAD > "$RUN_DIR/playground-revision.txt"
 git -C mujoco_playground/external_deps/mujoco_menagerie rev-parse HEAD > "$RUN_DIR/menagerie-revision.txt"
-.venv/bin/python -m pip freeze > "$RUN_DIR/python-packages.txt" 2>&1 || true
+uv pip freeze --python .venv/bin/python > "$RUN_DIR/python-packages.txt"
 export PYTHONNOUSERSITE=1 LD_LIBRARY_PATH=/usr/local/nvidia/lib64
 unset PYTHONPATH
 export WANDB_API_KEY="$(< "$SECRET")"
