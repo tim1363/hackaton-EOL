@@ -1,10 +1,15 @@
-# T1 · Подготовка сдачи решения
+# T1 / Контейнер
 
-**Сдать до 19.11.2026, 12:00 МСК.** [Техническое задание (PDF)](spec.pdf) · [Инструкция капитану](../../docs/submission.md)
+**Дедлайн: 19.11.2026, 12:00 МСК.** [ТЗ v4 (PDF)](spec.pdf) | [Чек-лист сдачи](../../docs/submission.md)
 
-**Сделано:** образ на Ubuntu 22.04 / ROS 2 Humble с CycloneDDS описан в [Dockerfile](Dockerfile), запуск настроен от непривилегированного пользователя. [entrypoint.sh](entrypoint.sh) при `ping` возвращает один JSON, не требует ROS-инициализации и не обращается к сети. Локально скрипт вернул код 0 и корректный JSON; это не проверка Docker-образа.
+**CI PASS, не сдано.** [GitHub Actions](https://github.com/tim1363/hackaton-EOL/actions/runs/44300117644) собрал `linux/amd64` и проверил запуск без сети и root.
 
-Образ пока рассчитан только на T1. `supported_tasks` пуст, `self_trained_rl` — `false`, `preferred_speed_mps` — `null`. Приём пустого списка нужно подтвердить у организаторов; незавершённые T2–T5 не заявляем.
+- [Dockerfile](Dockerfile): Ubuntu 22.04, ROS 2 Humble, CycloneDDS и непривилегированный UID.
+- [entrypoint.sh](entrypoint.sh): `ping` выводит один JSON, не поднимая ROS.
+- [verify_t1.py](verify_t1.py): проверяет платформу, окружение, UID, код выхода и ответ `ping` за 10 секунд.
+
+> [!NOTE]
+> Образ пока только для T1: `supported_tasks: []`, `self_trained_rl: false`, `preferred_speed_mps: null`. Уточняем у организаторов, принимают ли пустой список. Незаконченные задачи не заявляем.
 
 ## Сборка и проверка
 
@@ -12,7 +17,9 @@
 
 ```bash
 docker buildx build --platform linux/amd64 --load -t robohack-participant:t1 stages/T1
+
+# Без сети и автоскачивания. Проверяем то, что только что собрали.
 python3 stages/T1/verify_t1.py robohack-participant:t1
 ```
 
-В Windows можно заменить `python3` на `python`. Проверка запускает контейнер без сети и без скачивания образа; проверяет Linux/amd64, Ubuntu, ROS, CycloneDDS, UID и JSON в пределах 10 секунд. Интернет нужен на этапе сборки для загрузки базового образа и зависимостей. Результат сборки и проверки в CI — на вкладке [Actions](https://github.com/tim1363/hackaton-EOL/actions).
+В Windows можно заменить `python3` на `python`. Интернет нужен при сборке для загрузки базового образа и пакетов.

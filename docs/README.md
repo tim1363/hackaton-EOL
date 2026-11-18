@@ -1,6 +1,6 @@
 # Материалы организаторов
 
-[Общее ТЗ заочного этапа](technical-specification.pdf) и файлы `spec.pdf` в папках [T1](../stages/T1/), [T2](../stages/T2/), [T3](../stages/T3/), [T4](../stages/T4/) и [T5](../stages/T5/) — неизменённые копии PDF из [публичного репозитория организаторов](https://github.com/Urika000/go1-simulator-public/tree/b8df2a979358092db6e7606e068ce0dd187922f9/docs). Названия файлов в этом репозитории упрощены.
+[Общее ТЗ](technical-specification.pdf) и `spec.pdf` в папках [T1](../stages/T1/), [T2](../stages/T2/), [T3](../stages/T3/), [T4](../stages/T4/) и [T5](../stages/T5/) взяты из [репозитория организаторов](https://github.com/Urika000/go1-simulator-public/tree/b8df2a979358092db6e7606e068ce0dd187922f9/docs). Поменяли только имена файлов.
 
 Ссылки на этапе в личном кабинете могут обновляться. Перед отправкой сверяйте условия, сроки и версию задания там. Для T1 18.11.2026 кабинет показывал редакцию **v4**.
 

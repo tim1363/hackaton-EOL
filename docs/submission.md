@@ -1,4 +1,4 @@
-# T1 · Что и как сдаёт капитан
+# T1 / Чек-лист сдачи
 
 **До 19.11.2026, 12:00 МСК.** В кабинете на 18.11 отображалось 4 участника из 6 и 0 из 3 публикаций. Условия доступны, но сдача для команды заблокирована. Проверьте [состав команды](https://robohack.mirea.ru/cabinet/team?event=robohack-2-0) и доведите его до 6 засчитанных участников или уточните статус у организаторов.
 
@@ -9,6 +9,8 @@
 ```bash
 git status --short
 git rev-parse HEAD
+
+# Собираем тот же SHA, который укажем судьям.
 docker buildx build --platform linux/amd64 --load -t robohack-participant:t1 stages/T1
 python3 stages/T1/verify_t1.py robohack-participant:t1
 ```
@@ -16,6 +18,7 @@ python3 stages/T1/verify_t1.py robohack-participant:t1
 4. Войдите в Harbor с учётной записью организаторов и отправьте тот же проверенный образ. Пароль вводите интерактивно.
 
 ```bash
+# Пароль вводим в prompt, не пишем в команду.
 docker login registry.cookcloud.ru
 read -r -p 'Имя команды в Harbor: ' TEAM_NAME
 IMAGE_REPO="registry.cookcloud.ru/go1-hackathon-remote-stage-${TEAM_NAME}/${TEAM_NAME}"
@@ -28,6 +31,7 @@ docker buildx imagetools inspect "$IMAGE"
 5. Возьмите полный `Digest: sha256:…` из вывода и выполните проверку загрузки.
 
 ```bash
+# Тег меняется. Digest фиксирует конкретный образ.
 read -r -p 'Digest (sha256:...): ' DIGEST
 IMAGE_BY_DIGEST="${IMAGE_REPO}@${DIGEST}"
 docker pull --platform linux/amd64 "$IMAGE_BY_DIGEST"
