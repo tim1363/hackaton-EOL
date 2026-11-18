@@ -10,11 +10,25 @@ Playground.
 
 At each 20 ms control step, the adapter rejects non-finite action vectors,
 clamps joint targets to the T2 joint limits, and limits each target's change to
-5 degrees from the last accepted target. These are the *position/step* parts
-of T2; collision checking, transport, timing jitter and the watchdog are not yet
-emulated. This approximation does not establish T2 or T3 compliance. Policy
-training must be followed by validation and, if needed, fine-tuning against
-actual T2 decisions, including collision checks, in the public simulator.
+5 degrees from the last accepted target, matching the T2 position/step filter.
+An experimental `EXACT_T2_COLLISION=1` CPU callback also runs the T2 path
+checker, including all 655 pairs and intermediate samples, for every target.
+Its CPU batching/parity smoke test passed, but PPO training with the callback
+has not been run. It is expected to be much slower than GPU-only training. The initial `ppo-v3` run does not
+use the callback. The callback uses the training environment's MuJoCo version;
+the judge uses MuJoCo 3.3.7, so parity is not guaranteed. ROS transport,
+timing jitter and the watchdog are not emulated. End-to-end validation through
+the production ROS block in the public simulator is still required.
+
+## Run status (18 November 2026)
+
+The `ppo-v3` training loop finished 104,857,600 environment steps despite the
+requested 80,000,000; its last logged evaluation reward was 33.354. This is not
+a judge success metric. Checkpoints, environment configuration, package
+versions, TensorBoard data, and `console.log` are on the T4 host in
+`/kaggle/working/rh-runs/ppo-v3/`, not checked into Git. The run is also tracked
+[in W&B](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/0kyqsy03).
+No deployed ROS policy or successful 3 m episode has yet been verified.
 
 ## Reproduce on prepared T4 host
 
@@ -36,6 +50,11 @@ actual T2 decisions, including collision checks, in the public simulator.
   `NUM_TIMESTEPS`, `NUM_ENVS`, `NUM_EVALS`, or `SEED` for overrides.
   W&B goes to `wandb-abreow-abreow/unitree`; the launch script reads the
   existing key from `/kaggle/working/.secrets/wandb_api_key` without logging it.
+- For collision-aware fine-tuning, set `EXACT_T2_COLLISION=1`,
+  `SAFETY_CORE_DIR` to the directory containing `safety_core.py` and `model/`,
+  and `LOAD_CHECKPOINT_PATH` to the parent `checkpoints/` directory. Reduce `NUM_ENVS`
+  because collision checks are serialized on the CPU. The exact T2 source and
+  model are copied into the run directory for provenance.
 - Keep the entire run directory and console log as training provenance.
 
 The actor observation ordering and filtered-target update must be reproduced

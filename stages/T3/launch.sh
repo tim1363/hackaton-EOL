@@ -7,7 +7,14 @@ SECRET=${WANDB_KEY_FILE:-/kaggle/working/.secrets/wandb_api_key}
 HERE=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$RUN_DIR/source" "$RUN_DIR/logs"
 RUN_DIR=$(cd "$RUN_DIR" && pwd)
-cp "$HERE"/{train.py,safe_joystick.py,smoke_test.py,launch.sh} "$RUN_DIR/source/"
+cp "$HERE"/{train.py,safe_joystick.py,collision_callback.py,test_collision_callback.py,smoke_test.py,launch.sh} "$RUN_DIR/source/"
+if [[ ${EXACT_T2_COLLISION:-0} == 1 ]]; then
+  : "${SAFETY_CORE_DIR:?Set SAFETY_CORE_DIR to the directory containing safety_core.py and model/}"
+  mkdir -p "$RUN_DIR/source/t2"
+  cp "$SAFETY_CORE_DIR/safety_core.py" "$RUN_DIR/source/t2/"
+  cp -r "$SAFETY_CORE_DIR/model" "$RUN_DIR/source/t2/"
+  export SAFETY_CORE_DIR="$RUN_DIR/source/t2"
+fi
 cd "$PLAYGROUND"
 git rev-parse HEAD > "$RUN_DIR/playground-revision.txt"
 git -C mujoco_playground/external_deps/mujoco_menagerie rev-parse HEAD > "$RUN_DIR/menagerie-revision.txt"
@@ -21,9 +28,15 @@ export PYTHONUNBUFFERED=1
 export MUJOCO_GL=egl
 # 50 Hz control; 4096 parallel envs across both T4s. Checkpoints/evaluation
 # roughly every 5M transitions, with all effective hyperparameters in stdout.
+EXTRA_ARGS=()
+if [[ -n ${LOAD_CHECKPOINT_PATH:-} ]]; then
+  EXTRA_ARGS+=("--load_checkpoint_path=$LOAD_CHECKPOINT_PATH")
+fi
+printf 'EXACT_T2_COLLISION=%s\n' "${EXACT_T2_COLLISION:-0}"
+
 exec .venv/bin/python -u "$RUN_DIR/source/train.py" \
   --env_name=Go1JoystickFlatTerrain --impl=jax \
   --num_timesteps="${NUM_TIMESTEPS:-80000000}" --num_envs="${NUM_ENVS:-4096}" \
   --num_evals="${NUM_EVALS:-17}" --num_eval_envs=32 \
   --use_wandb --use_tb \
-  --logdir="$RUN_DIR/logs" --suffix=safe-ppo --seed="${SEED:-1}"
+  --logdir="$RUN_DIR/logs" --suffix=safe-ppo --seed="${SEED:-1}" "${EXTRA_ARGS[@]}"

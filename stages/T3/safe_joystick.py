@@ -1,18 +1,27 @@
 """Go1 PPO environment with deployable actor inputs and a target safety filter.
 
 Requires the pinned mujoco_playground checkout documented in README.md.
-This is deliberately not a substitute for the production collision checker.
+The optional CPU callback invokes the production T2 collision checker.
 """
+
+import os
+
 
 import jax
 import jax.numpy as jnp
 
 from mujoco_playground._src.locomotion.go1 import joystick
 
+
+if os.environ.get("EXACT_T2_COLLISION") == "1":
+    from collision_callback import collision_filter
+else:
+    collision_filter = None
+
 # T2 limits, ordered FR, FL, RR, RL (hip, thigh, calf).
-JOINT_LOWER = jnp.tile(jnp.array([-0.863, -0.686, -2.818]), 4)
-JOINT_UPPER = jnp.tile(jnp.array([0.863, 4.501, -0.888]), 4)
-MAX_TARGET_STEP = 5.0 * jnp.pi / 180.0
+JOINT_LOWER = jnp.tile(jnp.array([-0.863, -0.686, -2.818]), 4) + 0.000001
+JOINT_UPPER = jnp.tile(jnp.array([0.863, 4.501, -0.888]), 4) - 0.000001
+MAX_TARGET_STEP = 5.0 * jnp.pi / 180.0 - 0.000002
 
 
 def filter_targets(previous, requested):
@@ -22,14 +31,17 @@ def filter_targets(previous, requested):
     requested = jnp.where(finite, requested, previous)
     target = jnp.clip(requested, JOINT_LOWER, JOINT_UPPER)
     target = previous + jnp.clip(target - previous, -MAX_TARGET_STEP, MAX_TARGET_STEP)
-    return jnp.where(finite, target, previous)
+    target = jnp.where(finite, target, previous)
+    if collision_filter is not None:
+        target = collision_filter(previous, target)
+    return target
 
 
 class SafeJoystick(joystick.Joystick):
-    """Train against the position/step portion of T2, at 50 Hz.
+    """Train at 50 Hz with T2 target filtering and optional collision checks.
 
-    Collision and path checking, ROS transport, and the missing-input watchdog
-    are not modeled here; the production T2 block remains authoritative.
+    ROS transport, timing jitter and the missing-input watchdog are not modeled.
+    The production ROS T2 block and judge remain authoritative.
     """
 
     def _get_obs(self, data, info):
