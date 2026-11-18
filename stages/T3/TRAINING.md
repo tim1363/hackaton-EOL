@@ -28,7 +28,13 @@ a judge success metric. Checkpoints, environment configuration, package
 versions, TensorBoard data, and `console.log` are on the T4 host in
 `/kaggle/working/rh-runs/ppo-v3/`, not checked into Git. The run is also tracked
 [in W&B](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/0kyqsy03).
-No deployed ROS policy or successful 3 m episode has yet been verified.
+A separate Playground MJX evaluation of checkpoint `000104857600` at 0.4 m/s,
+seed 42, reached 3 m in 10/10 episodes (8.28–9.02 s after 1.5 s warmup),
+without detected falls. It used the run's original adapter snapshot with joint
+and step limits, but no collision checking or ROS. This is not a Judge result.
+The JSON is in `/opt/data/rh/ppo-v3/eval-0.4-seed42.json` and on the T4 host.
+Run `evaluate_playground.py` with the exact `source/safe_joystick.py` snapshot
+from that run, not necessarily the current repository adapter.
 
 ## Reproduce on prepared T4 host
 
@@ -60,3 +66,10 @@ No deployed ROS policy or successful 3 m episode has yet been verified.
 The actor observation ordering and filtered-target update must be reproduced
 exactly in the deployed ROS node; Playground's upstream observation normally
 lags the action by an extra step, which this adapter intentionally corrects.
+
+`export_policy.py CHECKPOINT OUTPUT.npz` exports a portable actor and compares
+128 deterministic actions against Brax. For checkpoint `000104857600`, maximum
+absolute error was `6.11e-7`; the exported file is stored at
+`/opt/data/rh/ppo-v3/actor-104857600.npz` (SHA-256
+`7a0e0d2f83017c881e2590079c01b7b6dd7ccd27d66d7e522a81d61c1ce9e0cd`).
+
