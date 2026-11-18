@@ -11,7 +11,8 @@ import numpy as np
 LOWER = np.tile([-0.863, -0.686, -2.818], 4)
 UPPER = np.tile([0.863, 4.501, -0.888], 4)
 HOME = np.tile([0.0, 0.9, -1.8], 4)
-MAX_STEP = math.radians(5.0)
+# Leave room for float32 serialization at the ROS message boundary.
+MAX_STEP = math.radians(5.0) - 0.000002
 JUDGE_SAMPLE_STEP = math.radians(0.1)
 # Numerical buffer against the judge's strictly greater than 1 mm penetration.
 PENETRATION_LIMIT = -0.0009
@@ -84,7 +85,7 @@ class TargetFilter:
         requested = np.asarray(requested, dtype=np.float64)
         if requested.shape != (12,) or not np.all(np.isfinite(requested)):
             return self.target.copy(), False
-        bounded = np.clip(requested, LOWER, UPPER)
+        bounded = np.clip(requested, LOWER + 0.000001, UPPER - 0.000001)
         candidate = self.target + np.clip(bounded - self.target, -MAX_STEP, MAX_STEP)
         if self.checker.safe_transition(self.target, candidate):
             self.target = candidate
