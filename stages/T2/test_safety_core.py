@@ -40,6 +40,33 @@ class SafetyTests(unittest.TestCase):
             TargetFilter(self.checker, q)
         self.assertFalse(self.checker.safe_transition(HOME, q))
 
+    def test_collision_pipeline_matches_forward(self):
+        # Compare every checked contact and distance, not just safe/unsafe.
+        # Include both broad joint-limit samples and near-home walking poses.
+        checker = self.checker
+        reference = mujoco.MjData(checker.model)
+        reference.qpos[:7] = [0, 0, 1, 1, 0, 0, 0]
+        rng = np.random.default_rng(87462)
+
+        def checked_contacts(data):
+            return sorted(
+                (*pair, float(c.dist))
+                for c in data.contact[:data.ncon]
+                if (pair := tuple(sorted((int(c.geom1), int(c.geom2))))) in checker.pairs
+            )
+
+        for i in range(2000):
+            q = (rng.uniform(LOWER, UPPER) if i % 2 == 0 else
+                 np.clip(HOME + rng.normal(0, 0.3, 12), LOWER, UPPER))
+            checker.safe(q)
+            reference.qpos[7:] = q
+            mujoco.mj_forward(checker.model, reference)
+            actual, expected = checked_contacts(checker.data), checked_contacts(reference)
+            self.assertEqual([c[:2] for c in actual], [c[:2] for c in expected])
+            np.testing.assert_allclose([c[2] for c in actual], [c[2] for c in expected],
+                                       rtol=1e-12, atol=1e-12)
+
+
     @unittest.skipUnless(os.getenv("GO1_FULL_SCENE"), "Set GO1_FULL_SCENE for parity")
     def test_slim_model_matches_full_model(self):
         model = mujoco.MjModel.from_xml_path(os.environ["GO1_FULL_SCENE"])

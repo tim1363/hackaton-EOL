@@ -52,10 +52,15 @@ class CollisionChecker:
 
     def safe(self, q):
         self.data.qpos[7:] = q
-        # This is the same narrow-phase engine as the official model; the floor
-        # is ignored by the published pair list. Contacts are computed at q.
-        mujoco.mj_forward(self.model, self.data)
-        for contact in self.data.contact[:self.data.ncon]:
+        # The safety model has no tendons or flexes: collision detection needs
+        # only current poses, not the dynamics/constraint work of mj_forward.
+        mujoco.mj_kinematics(self.model, self.data)
+        mujoco.mj_collision(self.model, self.data)
+        # Index contacts rather than iterating a sliced MuJoCo contact list:
+        # even iterating an empty slice has substantial Python binding overhead.
+        contacts = self.data.contact
+        for i in range(self.data.ncon):
+            contact = contacts[i]
             pair = tuple(sorted((int(contact.geom1), int(contact.geom2))))
             if pair in self.pairs and contact.dist < PENETRATION_LIMIT:
                 return False
