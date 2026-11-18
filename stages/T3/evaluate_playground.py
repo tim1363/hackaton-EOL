@@ -7,6 +7,7 @@ so results do not establish judge success. See README.md for limitations.
 
 import argparse
 import json
+import os
 import time
 
 from brax.training.acme import running_statistics
@@ -14,6 +15,7 @@ from brax.training.agents.ppo import checkpoint, networks
 import jax
 import jax.numpy as jnp
 import numpy as np
+from joint_dynamics import apply_public_joint_dynamics
 from mujoco_playground._src.locomotion.go1 import joystick
 
 from safe_joystick import SafeJoystick
@@ -40,13 +42,19 @@ def main():
     parser.add_argument("--speed", type=float, default=0.4)
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--public-joint-dynamics", action="store_true",
+                        help="Approximate public joint damping, armature and friction in MJX")
     parser.add_argument("--output", required=True, help="JSON results path")
     args = parser.parse_args()
     if not 0.1 <= args.speed <= 0.6 or args.episodes < 1:
         parser.error("speed must be in [0.1, 0.6] and episodes must be positive")
+    if os.environ.get("PUBLIC_JOINT_DYNAMICS") == "1" and not args.public_joint_dynamics:
+        parser.error("pass --public-joint-dynamics explicitly when PUBLIC_JOINT_DYNAMICS=1")
 
     env = FixedSpeedJoystick(config=joystick.default_config(), config_overrides={"impl": "jax"})
     env.speed = args.speed
+    if args.public_joint_dynamics:
+        apply_public_joint_dynamics(env)
     dt = float(env.dt)
     if abs(dt - 0.02) > 1e-9:
         raise ValueError(f"Unexpected control timestep: {dt}")
@@ -114,6 +122,7 @@ def main():
     result = {
         "scope": "Playground MJX only; no ROS, no T2 collision check, not judge results",
         "checkpoint": args.checkpoint, "seed": args.seed, "speed_mps": args.speed,
+        "public_joint_dynamics_approximation": args.public_joint_dynamics,
         "episode_count": args.episodes, "warmup_seconds": 1.5,
         "max_scored_seconds": 90.0, "control_dt": dt,
         "reference": "heading and position at end of warmup; falls checked after warmup",

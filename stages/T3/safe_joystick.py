@@ -44,6 +44,13 @@ class SafeJoystick(joystick.Joystick):
     The production ROS T2 block and judge remain authoritative.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if os.environ.get("PUBLIC_JOINT_DYNAMICS") == "1":
+            from joint_dynamics import apply_public_joint_dynamics
+            apply_public_joint_dynamics(self)
+
+
     def _get_obs(self, data, info):
         obs = super()._get_obs(data, info)
         # Upstream actor state starts with simulator-only body linear velocity.

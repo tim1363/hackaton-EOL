@@ -37,6 +37,28 @@ The JSON is in `/opt/data/rh/ppo-v3/eval-0.4-seed42.json` and on the T4 host.
 Run `evaluate_playground.py` with the exact `source/safe_joystick.py` snapshot
 from that run, not necessarily the current repository adapter.
 
+As a controlled sensitivity experiment, the same checkpoint and seeds with
+`--public-joint-dynamics` reached 3 m in 10/10 episodes, taking 13.44–14.26 s.
+The only intended changes were approximate joint dynamics: public passive
+hip/thigh/calf damping 1/2/2 plus deployed kd=0.5, armature 0.01, and joint
+frictionloss 0.2. This changes speed substantially in MJX; it does not isolate
+the cause of the public-simulator fall. The public servo clips the combined PD
+torque, while this approximation adds kd as passive damping and clips only
+the position actuator. Models, contact solver and ROS timing also differ.
+Results and exact evaluation source are in
+`/kaggle/working/rh-runs/ppo-v3-dynamics-eval/` and
+`/opt/data/rh/ppo-v3-dynamics-eval/`.
+
+`ppo-v4-dynamics` fine-tunes from the latest v3 checkpoint with this approximate
+joint model, 4096 envs, 20M requested transitions, and learning rate 1e-4. Its
+run directory is `/kaggle/working/rh-runs/ppo-v4-dynamics/` and its
+[W&B run](https://forge.coreweave.com/wandb/wandb-abreow-abreow/unitree/runs/3et8qgaw).
+It still uses only the GPU joint/step filter, not the CPU collision callback or
+ROS timing. Do not replace v3 until evaluating checkpoints through real T2 in
+the public simulator. `PUBLIC_JOINT_DYNAMICS=1` enables the approximation for
+training; the PPO configuration, source and flag values are preserved in the
+run directory.
+
 The ten-trial source snapshot is preserved under
 `/opt/data/rh/public-test/trial-source/`.
 
@@ -58,8 +80,9 @@ step was 0.08726454 rad (<5°). Offline rechecking of all 1,855 observed safe
 outputs with the same T2 core found no limit, step or sampled-transition
 violations (`check_safety_trace.py`); this is not an independent Judge check or
 complete collision coverage.
-The released simulator has higher joint damping and armature than the training
-model; the effect on gait and the single fall remain to be investigated.
+The released simulator differs from the original training model in joint
+damping, armature and friction. A joint-only MJX sensitivity experiment is
+recorded above; the cause of the fall remains to be investigated.
 
 For one isolated rootless Podman trial after loading the released image and
 exporting the actor (replace `IMAGE` and `ACTOR` as needed):
@@ -98,6 +121,8 @@ creation for optional diagnostic counters and a ROS observation trace.
 - Run `python smoke_test.py` inside that environment; it requires a GPU.
 - Copy this directory to the host, then run
   `RUN_DIR=/kaggle/working/rh-runs/<new-name> bash launch.sh > <log> 2>&1`.
+  For the experimental joint approximation set `PUBLIC_JOINT_DYNAMICS=1`;
+  `LEARNING_RATE` optionally overrides the PPO learning rate.
   `launch.sh` copies the exact source into the run, records revisions/package
   versions, and saves configs, checkpoints and TensorBoard logs. Set
   `NUM_TIMESTEPS`, `NUM_ENVS`, `NUM_EVALS`, or `SEED` for overrides.

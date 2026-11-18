@@ -7,7 +7,7 @@ SECRET=${WANDB_KEY_FILE:-/kaggle/working/.secrets/wandb_api_key}
 HERE=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$RUN_DIR/source" "$RUN_DIR/logs"
 RUN_DIR=$(cd "$RUN_DIR" && pwd)
-cp "$HERE"/{train.py,safe_joystick.py,collision_callback.py,test_collision_callback.py,smoke_test.py,launch.sh} "$RUN_DIR/source/"
+cp "$HERE"/{train.py,safe_joystick.py,joint_dynamics.py,collision_callback.py,test_collision_callback.py,smoke_test.py,launch.sh} "$RUN_DIR/source/"
 if [[ ${EXACT_T2_COLLISION:-0} == 1 ]]; then
   : "${SAFETY_CORE_DIR:?Set SAFETY_CORE_DIR to the directory containing safety_core.py and model/}"
   mkdir -p "$RUN_DIR/source/t2"
@@ -32,7 +32,10 @@ EXTRA_ARGS=()
 if [[ -n ${LOAD_CHECKPOINT_PATH:-} ]]; then
   EXTRA_ARGS+=("--load_checkpoint_path=$LOAD_CHECKPOINT_PATH")
 fi
-printf 'EXACT_T2_COLLISION=%s\n' "${EXACT_T2_COLLISION:-0}"
+if [[ -n ${LEARNING_RATE:-} ]]; then
+  EXTRA_ARGS+=("--learning_rate=$LEARNING_RATE")
+fi
+printf 'EXACT_T2_COLLISION=%s PUBLIC_JOINT_DYNAMICS=%s\n' "${EXACT_T2_COLLISION:-0}" "${PUBLIC_JOINT_DYNAMICS:-0}"
 
 exec .venv/bin/python -u "$RUN_DIR/source/train.py" \
   --env_name=Go1JoystickFlatTerrain --impl=jax \

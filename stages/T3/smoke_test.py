@@ -1,5 +1,6 @@
 """Smoke test the training adapter against the pinned Playground checkout."""
 
+import os
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -24,6 +25,11 @@ def main():
     assert np.all(np.asarray(repeated) >= np.asarray(JOINT_LOWER) - 1e-6)
 
     env = SafeJoystick(config=joystick.default_config(), config_overrides={"impl": "jax"})
+    if os.environ.get("PUBLIC_JOINT_DYNAMICS") == "1":
+        np.testing.assert_allclose(env.mj_model.dof_damping[6:], np.tile([1.5, 2.5, 2.5], 4))
+        np.testing.assert_allclose(env.mjx_model.dof_damping[6:], np.tile([1.5, 2.5, 2.5], 4))
+        np.testing.assert_allclose(env.mjx_model.dof_armature[6:], 0.01)
+        np.testing.assert_allclose(env.mjx_model.dof_frictionloss[6:], 0.2)
     state = jax.jit(env.reset)(jax.random.PRNGKey(0))
     assert state.obs["state"].shape == (45,), state.obs["state"].shape
     assert state.obs["privileged_state"].shape[0] > 45
