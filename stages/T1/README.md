@@ -1,6 +1,6 @@
 # T1 / Контейнер
 
-**Дедлайн: 19.11.2026, 12:00 МСК.** [ТЗ v4 (PDF)](spec.pdf) | [Чек-лист сдачи](../../docs/submission.md)
+**Дедлайн: 19.11.2026, 12:00 МСК.** [ТЗ v4 (PDF)](spec.pdf) | [Что отправили](../../docs/submission.md#что-отправили)
 
 T1 сдан. [CI](https://github.com/tim1363/hackaton-EOL/actions/runs/44300117644) проверил образ `linux/amd64` без сети и root.
 

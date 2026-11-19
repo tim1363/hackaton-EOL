@@ -8,7 +8,7 @@
 
 | Этап | Дедлайн (МСК) | Что готово | Статус |
 | --- | --- | --- | --- |
-| [T1 / Контейнер](stages/T1/) | 19.11, 12:00 | [Образ в Harbor и исходники](docs/submission.md) | Сдано |
+| [T1 / Контейнер](stages/T1/) | 19.11, 12:00 | [Коммит и образ из кабинета](docs/submission.md#что-отправили) | Сдано |
 | [T2 / Safety](https://github.com/tim1363/hackaton-EOL/tree/t2-t3-mishanya/stages/T2) | 21.11, 12:00 | Защита суставов, ROS-узел и локальные тесты | В работе |
 | [T4 / Odom](https://github.com/tim1363/hackaton-EOL/tree/t2-t3-mishanya/stages/T4) | 24.11, 12:00 | Прототип LiDAR + IMU | Проверить в Gazebo |
 | [T3 / Ходьба](stages/T3/) | 27.11, 12:00 | Есть обученные модели | Сравнить в симуляторе организаторов |
