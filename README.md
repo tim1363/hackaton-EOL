@@ -2,48 +2,35 @@
 
 ![Unitree Go1 на чертёжной сетке](docs/media/go1-cover.webp)
 
-Заочный этап: управление Go1, одометрия и навигация в симе. Стек: `ROS 2 Humble`, `MuJoCo`, `Gazebo`, `Docker`.
+Unitree Go1 · ROS 2 Humble · MuJoCo / Gazebo
 
-[Общее ТЗ (PDF)](docs/technical-specification.pdf) | [Запуск симулятора](docs/simulator.md) | [Чек-лист сдачи](docs/submission.md) | [ЛК RoboHack](https://robohack.mirea.ru/cabinet)
+[ТЗ](docs/technical-specification.pdf) · [Симулятор](docs/simulator.md) · [Сдача T1](docs/submission.md) · [Кабинет](https://robohack.mirea.ru/cabinet)
 
-## Статус этапов
+## T3 / Locomotion
+
+[![Локальный MuJoCo, 100 новых сценариев: PPO 100/100, ручная рысь 86/100 при 1,4 Гц и 71/100 при 1,8 Гц](docs/media/t3-bench.svg)](stages/T3/#mujoco-benchmark)
+
+Актор PPO: **7 884 параметра**, 3 м в среднем за **7,99 с**, без падений. Это [отдельный локальный бенчмарк](stages/T3/#mujoco-benchmark), не зачёт Judge.
+
+## Этапы
 
 | Этап | Дедлайн (МСК) | Что готово | Статус |
 | --- | --- | --- | --- |
-| [T1 / Контейнер](stages/T1/) | **19.11, 12:00** | Образ и `ping`. [CI: офлайн, без root](https://github.com/tim1363/hackaton-EOL/actions/runs/44300117644). | **Готово, осталось отправить** |
-| [T2 / Safety](stages/T2/) | 21.11, 12:00 | ТЗ и кейсы для проверки команд. | `TODO` |
-| [T4 / Odom](stages/T4/) | 24.11, 12:00 | ROS-топики, метрики RPE и дрейфа. | `TODO` |
-| [T3 / RL](stages/T3/) | 27.11, 12:00 | Схема подключения политики через T2. | `TODO`: выбрать политику |
-| [T5 / Nav2 + ArUco](stages/T5/) | 27.11, 12:00 | Контракты Nav2, TF и детектора. | `TODO` |
+| [T1 / Контейнер](stages/T1/) | 19.11, 12:00 | [Образ в Harbor и коммит для сдачи](docs/submission.md) | Сдача не подтверждена |
+| [T2 / Safety](https://github.com/tim1363/hackaton-EOL/tree/t2-t3-mishanya/stages/T2) | 21.11, 12:00 | Защита суставов, ROS-узел и локальные тесты | В работе |
+| [T4 / Odom](https://github.com/tim1363/hackaton-EOL/tree/t2-t3-mishanya/stages/T4) | 24.11, 12:00 | Прототип LiDAR + IMU | Проверить в Gazebo |
+| [T3 / RL](stages/T3/) | 27.11, 12:00 | Локальная PPO и [кандидаты команды](https://github.com/tim1363/hackaton-EOL/tree/t2-t3-mishanya/stages/T3) | Сравнить в публичном симуляторе |
+| [T5 / Nav2 + ArUco](stages/T5/) | 27.11, 12:00 | Список топиков и проверок | Нет реализации |
 
-> [!IMPORTANT]
-> **CI зелёный, в ЛК не сдано.** На 18.11.2026 в команде было 4/6 участников, приём для команды заблокирован. Капитану: проверить состав, подготовить публичный коммит и выгрузить образ в Harbor. Дедлайн T1: **19.11.2026 в 12:00 МСК**.
+T3 использует защиту T2, T5 использует одометрию T4. В PR оставляйте команду запуска и лог проверки.
 
-## Быстрый старт
+## T1 / Smoke test
 
-Нужен доступ к этому приватному репо. Команды ниже для Bash на машине с Docker Engine и Buildx.
+Из корня репозитория, с Docker и Buildx:
 
 ```bash
-git clone https://github.com/tim1363/hackaton-EOL.git
-cd hackaton-EOL
-
-# Сначала ping. Гулять пойдём в T3.
 docker buildx build --platform linux/amd64 --load -t robohack-participant:t1 stages/T1
 python3 stages/T1/verify_t1.py robohack-participant:t1
 ```
 
-Нет Docker под рукой? [Посмотрите успешный прогон T1](https://github.com/tim1363/hackaton-EOL/actions/runs/44300117644).
-
-## Как делим работу
-
-Берём **T2 и T4 параллельно**. Для локальных прогонов используем [публичный сим](docs/simulator.md); закрытого Judge в нём нет.
-
-```mermaid
-flowchart LR
-    T2["T2 · Safety"] --> T3["T3 · RL"]
-    T4["T4 · Odom"] --> T5["T5 · Nav2"]
-```
-
-- В каждом `stages/T*`: исходный `spec.pdf`, контракт и следующий шаг. Источник PDF указан в [docs](docs/).
-- Один этап на ветку: `t2/safety`, `t4/odom`. В PR пишем, что менялось, какой командой проверили и где лог.
-- Пароли Harbor, токены, файлы ЛК и образы в Git не кладём. Судьям нужен публичный коммит; этот репозиторий остаётся рабочим и приватным.
+Без Docker: [лог проверки T1 в CI](https://github.com/tim1363/hackaton-EOL/actions/runs/44300117644).
