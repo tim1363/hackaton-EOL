@@ -14,7 +14,8 @@ docker run --rm --network none --entrypoint bash \
     test "$(id -u)" = 10001
     source /opt/ros/humble/setup.bash
     source /opt/unitree/local_setup.bash
-    export PYTHONPATH=/opt/rh/T2 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    export PYTHONPATH="/opt/rh/T2${PYTHONPATH:+:$PYTHONPATH}"
+    export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
     cd /opt/rh/T2
     python3 -m unittest -v test_safety_core
