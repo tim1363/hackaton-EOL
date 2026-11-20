@@ -174,6 +174,7 @@ def run():
         previous = None
         for _, output in driver.samples:
             assert all(math.isfinite(getattr(m, f)) for m in output.motor_cmd for f in FIELDS)
+            assert all(motor.mode == 0x0A for motor in output.motor_cmd[:12])
             q = values(output, "q")
             assert np.all(q >= LOWER) and np.all(q <= UPPER), f"joint limit: {q}"
             if previous is not None:
