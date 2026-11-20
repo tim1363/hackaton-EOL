@@ -35,4 +35,5 @@ jobs:
           retention-days: 3
           compression-level: 0
       - name: Show the exact source commit
-        run: printf 'Source: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          printf 'Source: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
