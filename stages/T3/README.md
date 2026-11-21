@@ -1,6 +1,6 @@
 # T3 / Ходьба
 
-Дедлайн: 27.11.2026, 12:00 МСК. [ТЗ (PDF)](spec.pdf).
+Дедлайн: 27.11.2026, 12:00 МСК. [ТЗ (PDF)](spec.pdf) · [Коммит и образ для отправки](../../docs/t3-t4-submission.md#t3)
 
 В образе новая PPO-модель, обученная с нуля. Сеть корректирует рысь и выдаёт цели для 12 суставов. Она получает команду скорости из `/cmd_vel` и состояние из `/lowstate`. В `/lowcmd` пишет только защита T2, сама модель пишет в `/lowcmd_bare`. В `ping` заявлены 0,4 м/с и `self_trained_rl: true`.
 
@@ -12,7 +12,7 @@
 - [Настройки](training/config.json), [журнал PPO](training/train.log) и [метрики эпизодов](training/training.monitor.csv).
 - [Тест на 20 новых сценариях](training/holdout.json): 20/20 без падений, включая 10 усложнённых. Это локальная среда.
 - [Отдельная финальная проверка](training/final-test.json): 100/100 без падений, в среднем 5,42 с на 3 метра. Из них 50 усложнённых. Это также локальная среда, не Judge.
-- [Прогон в публичном MuJoCo](https://github.com/tim1363/hackaton-EOL/actions/workflows/t3-submission.yml): каждый эпизод использует новый контейнер. Истинная позиция используется только в тесте для измерения пути.
+- [Прогон в публичном MuJoCo](https://github.com/tim1363/hackaton-EOL/actions/runs/44891350196): 10/10 заездов в новых контейнерах через T2. Истинная позиция используется только в тесте для измерения пути.
 
 Для повторения обучения нужны Python 3.13, PyTorch CPU, Stable Baselines3 2.9.2, Gymnasium 1.4.0, NumPy 2.5.5 и MuJoCo 3.3.7. Сцена и ассеты Go1: [MuJoCo Menagerie, ревизия из ТЗ](https://github.com/google-deepmind/mujoco_menagerie/tree/0059d4335f8156206f63a35662313385f7ad6d74/unitree_go1).
 
