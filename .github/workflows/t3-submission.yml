@@ -1,0 +1,51 @@
+name: T3 MuJoCo and Harbor
+
+on:
+  push:
+    branches: [main]
+    paths: ['stages/T3/**', '.github/workflows/t3-submission.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  t3:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      SIM_IMAGE: registry.cookcloud.ru/go1-hackathon-remote-stage/go1-sim:v1.0@sha256:c79ddbece6cc7d00f114a9a9a09be0bae061ebb35ca722bcbe51bf75fce1b2e3
+      IMAGE_REPO: registry.cookcloud.ru/end-of-line/end-of-line
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Build participant
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_RELEASE_PASSWORD }}
+        run: |
+          test -n "$HARBOR_PASSWORD"
+          printf '%s' "$HARBOR_PASSWORD" | docker login registry.cookcloud.ru -u end-of-line --password-stdin
+          unset HARBOR_PASSWORD
+          docker buildx build --platform linux/amd64 --load -f stages/T3/Dockerfile -t eol-t3:local .
+      - name: Verify ten fresh starts in public MuJoCo
+        run: |
+          docker pull --platform linux/amd64 "$SIM_IMAGE"
+          bash stages/T3/test_image.sh eol-t3:local "$SIM_IMAGE"
+      - name: Publish the tested image
+        run: |
+          set -eo pipefail
+          image="$IMAGE_REPO:t3-${GITHUB_SHA:0:12}"
+          config="$(docker image inspect eol-t3:local --format '{{.Id}}')"
+          docker tag eol-t3:local "$image"
+          docker push "$image"
+          digest="$(docker buildx imagetools inspect "$image" --format '{{.Manifest.Digest}}')"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          published="$IMAGE_REPO@$digest"
+          docker pull --platform linux/amd64 "$published"
+          test "$(docker image inspect "$published" --format '{{.Id}}')" = "$config"
+          printf 'Commit: %s/%s/commit/%s\nDocker pull: docker pull --platform linux/amd64 %s\n' \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$published" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: End the registry session
+        if: always()
+        run: docker logout registry.cookcloud.ru

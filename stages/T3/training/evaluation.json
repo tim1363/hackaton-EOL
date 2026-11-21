@@ -1,0 +1,82 @@
+[
+  {
+    "seed": 1063,
+    "seconds": 5.42,
+    "distance_m": 3.004,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 367.22
+  },
+  {
+    "seed": 1064,
+    "seconds": 5.4,
+    "distance_m": 3.004,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 367.89
+  },
+  {
+    "seed": 1065,
+    "seconds": 5.36,
+    "distance_m": 3.004,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 366.57
+  },
+  {
+    "seed": 1066,
+    "seconds": 5.38,
+    "distance_m": 3.009,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 367.42
+  },
+  {
+    "seed": 1067,
+    "seconds": 5.5,
+    "distance_m": 3.003,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 372.36
+  },
+  {
+    "seed": 1068,
+    "seconds": 5.52,
+    "distance_m": 3.006,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 372.21
+  },
+  {
+    "seed": 1069,
+    "seconds": 5.46,
+    "distance_m": 3.001,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 371.52
+  },
+  {
+    "seed": 1070,
+    "seconds": 5.7,
+    "distance_m": 3.001,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 377.99
+  },
+  {
+    "seed": 1071,
+    "seconds": 5.54,
+    "distance_m": 3.009,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 368.76
+  },
+  {
+    "seed": 1072,
+    "seconds": 5.4,
+    "distance_m": 3.002,
+    "fallen": false,
+    "reached_3m": true,
+    "reward": 366.15
+  }
+]

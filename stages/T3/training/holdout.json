@@ -1,0 +1,190 @@
+{
+  "episodes": 20,
+  "successes": 20,
+  "stress_successes": 10,
+  "falls": 0,
+  "median_distance_m": 3.0045,
+  "mean_seconds_to_3m": 5.399,
+  "trials": [
+    {
+      "seed": 88000,
+      "seconds": 5.42,
+      "distance_m": 3.01,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 369.28,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88001,
+      "seconds": 5.44,
+      "distance_m": 3.001,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 369.4,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88002,
+      "seconds": 5.46,
+      "distance_m": 3.001,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 371.07,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88003,
+      "seconds": 5.42,
+      "distance_m": 3.01,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 367.17,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88004,
+      "seconds": 5.42,
+      "distance_m": 3.003,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 367.79,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88005,
+      "seconds": 5.38,
+      "distance_m": 3.007,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 365.67,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88006,
+      "seconds": 5.38,
+      "distance_m": 3.004,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 366.58,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88007,
+      "seconds": 5.38,
+      "distance_m": 3.004,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 367.36,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88008,
+      "seconds": 5.34,
+      "distance_m": 3.003,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 363.63,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88009,
+      "seconds": 5.38,
+      "distance_m": 3.005,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 364.6,
+      "scenario": "nominal"
+    },
+    {
+      "seed": 88010,
+      "seconds": 5.38,
+      "distance_m": 3.006,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 368.02,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88011,
+      "seconds": 5.34,
+      "distance_m": 3.01,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 368.95,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88012,
+      "seconds": 5.44,
+      "distance_m": 3.007,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 368.72,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88013,
+      "seconds": 5.24,
+      "distance_m": 3.006,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 366.18,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88014,
+      "seconds": 5.54,
+      "distance_m": 3.004,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 370.82,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88015,
+      "seconds": 5.42,
+      "distance_m": 3.007,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 368.36,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88016,
+      "seconds": 5.34,
+      "distance_m": 3.0,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 369.4,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88017,
+      "seconds": 5.42,
+      "distance_m": 3.005,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 368.37,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88018,
+      "seconds": 5.44,
+      "distance_m": 3.002,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 367.97,
+      "scenario": "stress"
+    },
+    {
+      "seed": 88019,
+      "seconds": 5.4,
+      "distance_m": 3.001,
+      "fallen": false,
+      "reached_3m": true,
+      "reward": 371.88,
+      "scenario": "stress"
+    }
+  ]
+}

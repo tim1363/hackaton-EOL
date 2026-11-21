@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "joints": [
+    "FR_hip",
+    "FR_thigh",
+    "FR_calf",
+    "FL_hip",
+    "FL_thigh",
+    "FL_calf",
+    "RR_hip",
+    "RR_thigh",
+    "RR_calf",
+    "RL_hip",
+    "RL_thigh",
+    "RL_calf"
+  ],
+  "observations": [
+    [
+      "body_up_xyz",
+      3
+    ],
+    [
+      "body_angular_velocity_rad_s",
+      3
+    ],
+    [
+      "requested_forward_speed_mps",
+      1
+    ],
+    [
+      "joint_position_offset_rad",
+      12
+    ],
+    [
+      "joint_velocity_rad_s",
+      12
+    ],
+    [
+      "previous_action",
+      12
+    ],
+    [
+      "gait_phase_sin_cos",
+      2
+    ]
+  ],
+  "action": "clip to [-1, 1], scale about nominal pose, clip joint limits, limit target delta",
+  "home_rad": [
+    0.0,
+    0.9,
+    -1.8,
+    0.0,
+    0.9,
+    -1.8,
+    0.0,
+    0.9,
+    -1.8,
+    0.0,
+    0.9,
+    -1.8
+  ],
+  "control_limits_rad": [
+    [
+      -0.863,
+      0.863
+    ],
+    [
+      -0.686,
+      4.501
+    ],
+    [
+      -2.818,
+      -0.888
+    ],
+    [
+      -0.863,
+      0.863
+    ],
+    [
+      -0.686,
+      4.501
+    ],
+    [
+      -2.818,
+      -0.888
+    ],
+    [
+      -0.863,
+      0.863
+    ],
+    [
+      -0.686,
+      4.501
+    ],
+    [
+      -2.818,
+      -0.888
+    ],
+    [
+      -0.863,
+      0.863
+    ],
+    [
+      -0.686,
+      4.501
+    ],
+    [
+      -2.818,
+      -0.888
+    ]
+  ],
+  "config": {
+    "speed_mps": 0.4,
+    "control_hz": 50,
+    "episode_seconds": 15.0,
+    "action_radius_rad": 0.1,
+    "max_target_step_rad": 0.08726646259971647,
+    "objective": "course",
+    "gait_hz": 1.8,
+    "scenario": "mixed",
+    "servo_kp": 85.0,
+    "servo_kd": 0.5,
+    "reward": {
+      "tracking": 1.5,
+      "upright": 0.15,
+      "lateral": 0.2,
+      "turning": 0.12,
+      "effort": 0.025,
+      "jerk": 0.04,
+      "fall": 2.0
+    }
+  },
+  "export_max_abs_error": 2.980232238769531e-07
+}
