@@ -52,7 +52,16 @@ def match_translation(previous, current, yaw_delta, initial=None):
         return None
     rotated = current @ rotation2(yaw_delta).T
     offset = np.zeros(2) if initial is None else np.asarray(initial, dtype=float).copy()
-    for _ in range(12):
+    left = previous - np.roll(previous, 1, axis=0)
+    right = np.roll(previous, -1, axis=0) - previous
+    left_length = np.linalg.norm(left, axis=1)
+    right_length = np.linalg.norm(right, axis=1)
+    tangent = left + right
+    tangent_length = np.linalg.norm(tangent, axis=1)
+    normals = np.column_stack((-tangent[:, 1], tangent[:, 0])) / np.maximum(tangent_length[:, None], 1e-6)
+    aligned = np.sum(left * right, axis=1) >= 0.65 * left_length * right_length
+    surface = aligned & (left_length < 0.65) & (right_length < 0.65) & (tangent_length > 1e-3)
+    for _ in range(8):
         moved = rotated + offset
         distances = np.sum((moved[:, None, :] - previous[None, :, :])**2, axis=2)
         nearest = np.argmin(distances, axis=1)
@@ -61,7 +70,19 @@ def match_translation(previous, current, yaw_delta, initial=None):
         if mask.sum() < 20:
             return None
         residual = previous[nearest[mask]] - moved[mask]
-        update = np.median(residual, axis=0)
+        usable = surface[nearest[mask]]
+        if usable.sum() >= 18:
+            basis = normals[nearest[mask][usable]]
+            signed = np.sum(residual[usable] * basis, axis=1)
+            scale = max(0.012, 2.5 * np.median(np.abs(signed)))
+            weights = np.minimum(1.0, scale / np.maximum(np.abs(signed), 1e-9))
+            gram = (basis.T * weights) @ basis
+            if np.linalg.eigvalsh(gram)[0] >= 0.05 * np.trace(gram):
+                update = np.linalg.solve(gram, basis.T @ (weights * signed))
+            else:
+                update = np.median(residual, axis=0)
+        else:
+            update = np.median(residual, axis=0)
         offset += update
         if np.linalg.norm(update) < 1e-4:
             break

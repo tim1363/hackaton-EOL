@@ -21,6 +21,14 @@ class ScanMatchTest(unittest.TestCase):
         self.assertIsNone(match_translation(np.zeros((5, 2)), np.zeros((5, 2)), 0.0))
         self.assertIsNone(match_translation(np.zeros((30, 2)), np.ones((30, 2)) * 10, 0.0))
 
+    def test_subsample_motion_along_walls(self):
+        samples = np.linspace(-2, 2, 100)
+        previous = np.vstack((np.column_stack((samples, np.full_like(samples, -2))),
+                              np.column_stack((np.full_like(samples, 2), samples))))
+        expected = np.array([0.008, -0.006])
+        current = (previous - expected) @ rotation2(0.015)
+        np.testing.assert_allclose(match_translation(previous, current, 0.015), expected, atol=1e-5)
+
     def test_quaternion_yaw_and_composition(self):
         a, b = yaw_quaternion(0.2), yaw_quaternion(-0.5)
         self.assertAlmostEqual(yaw_of(quaternion_multiply(a, b)), -0.3)

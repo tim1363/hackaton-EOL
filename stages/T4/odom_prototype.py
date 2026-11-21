@@ -79,15 +79,18 @@ class OdomPrototype(Node):
         if not math.isfinite(msg.angle_min) or not math.isfinite(msg.angle_increment):
             return
         ranges = np.asarray(msg.ranges, dtype=float)
-        mask = np.isfinite(ranges) & (ranges >= msg.range_min) & (ranges < msg.range_max)
+        mask = np.isfinite(ranges) & (ranges >= max(msg.range_min, 0.35)) & (ranges < msg.range_max)
         indices = np.flatnonzero(mask)
         if len(indices) < 20:
             return
-        indices = indices[::max(1, math.ceil(len(indices) / 160))]
+        indices = indices[::max(1, math.ceil(len(indices) / 360))]
         angles = msg.angle_min + indices * msg.angle_increment
         points = np.column_stack((ranges[indices] * np.cos(angles),
                                   ranges[indices] * np.sin(angles), np.zeros(len(indices))))
-        points = ((points @ sensor_rotation.T + sensor_offset) @ level.T)[:, :2]
+        points = (points @ sensor_rotation.T + sensor_offset) @ level.T
+        points = points[points[:, 2] > -0.17, :2]
+        if len(points) < 20:
+            return
         if not np.all(np.isfinite(points)):
             return
         if self.previous_scan is None:
